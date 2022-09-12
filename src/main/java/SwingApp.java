@@ -37,7 +37,9 @@ public class SwingApp {
 
         String[][] strings = new String[data.size()][3];
 
-        for (int i = 0; )
+        for (int i = 0; i<data.size(); i++) {
+            
+        }
 
         String[] column = {"ID", "MODEL", "TYPE", "PRICE"};
         final JTable jt = new JTable(arrayData, column);
