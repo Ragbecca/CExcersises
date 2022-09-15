@@ -1,22 +1,52 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class ConnectMySQL {
 
-    public Connection connect() {
-        String url = "jdbc:mysql://localhost:3306/javabase";
-        String username = "root";
-        String password = "root";
+    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/javabase";
+    private static final String USERNAME = "root";
+    private static final String PASSWORD = "root";
+    private static final String MAX_POOL = "250";
 
-        System.out.println("Connecting database...");
+    // init connection object
+    private Connection connection;
+    // init properties object
+    private Properties properties;
 
-        try (Connection connection = DriverManager.getConnection(url, username, password)) {
-            System.out.println("Database connected!");
-            return connection;
-        } catch (SQLException e) {
-            throw new IllegalStateException("Cannot connect the database!", e);
+    // create properties
+    private Properties getProperties() {
+        if (properties == null) {
+            properties = new Properties();
+            properties.setProperty("user", USERNAME);
+            properties.setProperty("password", PASSWORD);
+            properties.setProperty("MaxPooledStatements", MAX_POOL);
         }
+        return properties;
     }
 
+    // connect database
+    public Connection connect() {
+        if (connection == null) {
+            try {
+                connection = DriverManager.getConnection(DATABASE_URL, getProperties());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return connection;
+    }
+
+    // disconnect database
+    public void disconnect() {
+        if (connection != null) {
+            try {
+                connection.close();
+                connection = null;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
