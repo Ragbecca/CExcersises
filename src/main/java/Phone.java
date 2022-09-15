@@ -32,7 +32,7 @@ public class Phone {
     }
 
     public void setType(String type) {
-        type = type;
+        this.type = type;
     }
 
     public String getDescription() {

@@ -5,14 +5,11 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -40,7 +37,7 @@ public class SwingApp {
         JTable jTable = createPhoneViewer(jFrame, sprLayout);
         createSearchBar(jFrame, sprLayout, jTable);
 
-        addButton(jFrame, sprLayout, jTable, connectMySQL);
+        addButton(jFrame, sprLayout, connectMySQL);
         removeButton(jFrame, sprLayout, jTable, connectMySQL);
         exitButton(jFrame, sprLayout);
 
@@ -156,13 +153,13 @@ public class SwingApp {
         putConstraint(springLayout, textField, 10, -1, 240, 10, container);
     }
 
-    public static void addButton(JFrame jFrame, SpringLayout springLayout, JTable jTable, ConnectMySQL connectMySQL) {
+    public static void addButton(JFrame jFrame, SpringLayout springLayout, ConnectMySQL connectMySQL) {
         Container container = jFrame.getContentPane();
 
         JButton addButton = new JButton("+");
 
         addButton.addActionListener(e -> {
-            SwingAddApp.addNewPhone(jFrame ,jTable, connectMySQL);
+            SwingAddApp.addNewPhone(jFrame , connectMySQL);
         });
 
         jFrame.add(addButton);
