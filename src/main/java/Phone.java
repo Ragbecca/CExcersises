@@ -15,10 +15,6 @@ public class Phone {
         this.stock = stock;
     }
 
-    public int getPhone_id() {
-        return phone_id;
-    }
-
     public String getBrand() {
         return brand;
     }
@@ -32,7 +28,7 @@ public class Phone {
     }
 
     public void setType(String type) {
-        type = type;
+        this.type = type;
     }
 
     public String getDescription() {

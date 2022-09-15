@@ -1,9 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ public class SwingAddApp {
 
     static List<Brand> brands;
 
-    public static void addNewPhone(JFrame otherJFrame, JTable jTable, ConnectMySQL connectMySQL) {
+    public static void addNewPhone(JFrame otherJFrame, ConnectMySQL connectMySQL) {
         JFrame jFrame = new JFrame("Add Phone");
 
         SpringLayout sprLayout = new SpringLayout();
@@ -157,6 +157,7 @@ public class SwingAddApp {
             }
             try {
                 gottenPrice = Double.parseDouble(gottenPriceText);
+                gottenPrice = new BigDecimal(gottenPrice*1.21).setScale(2, RoundingMode.HALF_DOWN).doubleValue();
             } catch (NumberFormatException error) {
                 errorText.setText("Your price wasn't a correct number. Maybe it has to do with you using a , instead of a .");
                 errorText.setVisible(true);
