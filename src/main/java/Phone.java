@@ -15,6 +15,10 @@ public class Phone {
         this.stock = stock;
     }
 
+    public int getPhone_id() {
+        return phone_id;
+    }
+
     public String getBrand() {
         return brand;
     }
