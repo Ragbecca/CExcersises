@@ -16,14 +16,41 @@ import java.util.stream.Collectors;
 
 public class SwingApp {
 
+    /**
+     * TextArea where the brand will be displayed
+     */
     static JTextArea brandText;
+
+    /**
+     * TextArea where the price will be displayed
+     */
     static JTextArea priceText;
+
+    /**
+     * TextArea where the model/type will be displayed
+     */
     static JTextArea typeText;
+
+    /**
+     * TextArea where the stock will be displayed
+     */
     static JTextArea stockText;
+
+    /**
+     * TextArea where the description will be displayed
+     */
     static JTextArea descriptionText;
 
+    /**
+     * List with all the phones to be accessed later
+     */
     static List<Phone> phones;
 
+    /**
+     * Create the view for the application
+     *
+     * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
+     */
     public static void createView(ConnectMySQL connectMySQL) {
 
         JFrame.setDefaultLookAndFeelDecorated(true);
@@ -64,6 +91,12 @@ public class SwingApp {
         jFrame.setVisible(true);
     }
 
+    /**
+     * The creation of all individual labels that aren't special.
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     */
     public static void createLabels(JFrame jFrame, SpringLayout springLayout) {
         Container container = jFrame.getContentPane();
 
@@ -92,6 +125,13 @@ public class SwingApp {
         putConstraint(springLayout, stockText, 50, -1, 670, 530, container);
     }
 
+    /**
+     * The creation of the Searchbar in order to Search on the application
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @param jTable       The table that needs to be updated when the search is happening
+     */
     public static void createSearchBar(JFrame jFrame, SpringLayout springLayout, JTable jTable) {
         Container container = jFrame.getContentPane();
 
@@ -153,13 +193,20 @@ public class SwingApp {
         putConstraint(springLayout, textField, 10, -1, 240, 10, container);
     }
 
+    /**
+     * Opens an external view which makes it possible to add another Phone to the system
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
+     */
     public static void addButton(JFrame jFrame, SpringLayout springLayout, ConnectMySQL connectMySQL) {
         Container container = jFrame.getContentPane();
 
         JButton addButton = new JButton("+");
 
         addButton.addActionListener(e -> {
-            SwingAddApp.addNewPhone(jFrame , connectMySQL);
+            SwingAddApp.addNewPhone(jFrame, connectMySQL);
         });
 
         jFrame.add(addButton);
@@ -168,6 +215,14 @@ public class SwingApp {
 
     }
 
+    /**
+     * Removes a value from the DB and screen
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @param jTable       The Table which the value will be grabbed from to be deleted
+     * @param connectMySQL The connection to MySQL in order to remove the value from the DB
+     */
     public static void removeButton(JFrame jFrame, SpringLayout springLayout, JTable jTable, ConnectMySQL connectMySQL) {
 
         Container container = jFrame.getContentPane();
@@ -183,7 +238,7 @@ public class SwingApp {
             String information = value.substring(value.indexOf(" ") + 1);
 
             try {
-                connectMySQL.connect().prepareStatement("DELETE FROM javabase.phone WHERE Type='" + information +"';").execute();
+                connectMySQL.connect().prepareStatement("DELETE FROM javabase.phone WHERE Type='" + information + "';").execute();
 
                 getData(connectMySQL);
                 System.out.println("Succesfully deleted");
@@ -204,6 +259,12 @@ public class SwingApp {
         jFrame.add(removeButton);
     }
 
+    /**
+     * Creates an exit button which closes the whole console
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     */
     public static void exitButton(JFrame jFrame, SpringLayout springLayout) {
         Container container = jFrame.getContentPane();
 
@@ -216,6 +277,13 @@ public class SwingApp {
         jFrame.add(exitButton);
     }
 
+    /**
+     * Adds the description + description label to the view
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @return sends back the TextArea that has been created. For changes later on
+     */
     public static JTextArea addDecription(JFrame jFrame, SpringLayout springLayout) {
         JTextArea jTextArea = new JTextArea(" ");
         JLabel jLabel = new JLabel("Description");
@@ -236,6 +304,12 @@ public class SwingApp {
     }
 
 
+    /**
+     * Creates a TextArea for viewing, combined with createLabel(JFrame, String)
+     *
+     * @param jFrame The Canvas that the viewer needs to attach to
+     * @return sends back the TextArea that has been created. For changes later on
+     */
     public static JTextArea createLabel(JFrame jFrame) {
         JTextArea jTextArea = new JTextArea(" ");
         jTextArea.setEditable(false);
@@ -243,6 +317,13 @@ public class SwingApp {
         return jTextArea;
     }
 
+    /**
+     * Creates a label for viewing, combined with createLabel(JFrame)
+     *
+     * @param jFrame The Canvas that the viewer needs to attach to
+     * @param text   The text visible on the label
+     * @return sends back the Label that has been created. For changes later on
+     */
     public static JLabel createLabel(JFrame jFrame, String text) {
         JLabel jLabel = new JLabel(text);
         jFrame.add(jLabel);
@@ -250,6 +331,13 @@ public class SwingApp {
     }
 
 
+    /**
+     * Creates a view of the PhoneList
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @return JTable that is filled and initialized. Will be usable for checks and updates
+     */
     public static JTable createPhoneViewer(JFrame jFrame, SpringLayout springLayout) {
         Container container = jFrame.getContentPane();
 
@@ -329,6 +417,11 @@ public class SwingApp {
         return jTable;
     }
 
+    /**
+     * Shows a singular phone with all values in the TextArea's.
+     *
+     * @param phone Sends the phone with which needs to be shown.
+     */
     public static void viewPhone(Phone phone) {
         brandText.setText(phone.getBrand());
         priceText.setText("€ " + BigDecimal.valueOf(phone.getPrice()).setScale(2, RoundingMode.HALF_DOWN));
@@ -338,6 +431,12 @@ public class SwingApp {
     }
 
 
+    /**
+     * Grab the data from the MySQL database and returns it.
+     *
+     * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
+     * @return a list of phones with all the data from the database.
+     */
     public static List<Phone> getData(ConnectMySQL connectMySQL) {
         try {
             ResultSet resultSet = connectMySQL.connect().prepareStatement("SELECT P.phone_ID, P.`Type`," +
@@ -360,6 +459,12 @@ public class SwingApp {
         }
     }
 
+    /**
+     * Adds the placeholderStyle to a TextField. This TextField is commonly a Search.
+     * Shows the specialised style of a TextField
+     *
+     * @param textField The TextField that needs to be shown with a special style
+     */
     public static void addPlaceholderStyle(JTextField textField) {
         Font font = textField.getFont();
         font = font.deriveFont(Font.ITALIC);
@@ -367,6 +472,12 @@ public class SwingApp {
         textField.setForeground(Color.gray);
     }
 
+    /**
+     * Removes the placeholderStyle from a TextField. This TextField is commonly a Search.
+     * Shows the normal style of a TextField
+     *
+     * @param textField The TextField that needs to become normal
+     */
     public static void removePlaceholderStyle(JTextField textField) {
         Font font = textField.getFont();
         font = font.deriveFont(Font.PLAIN | Font.BOLD);
@@ -374,6 +485,12 @@ public class SwingApp {
         textField.setForeground(Color.black);
     }
 
+    /**
+     * Update the phone viewer on the first view. The phone-viewer is also known as the jTable.
+     *
+     * @param phones The list of phones that's saved, used to show which phones there are on the table.
+     * @param jTable The table that shows the phones
+     */
     public static void updatePhoneViewer(List<Phone> phones, JTable jTable) {
         DefaultTableModel model = (DefaultTableModel) jTable.getModel();
 
@@ -393,6 +510,17 @@ public class SwingApp {
         model.fireTableDataChanged();
     }
 
+    /**
+     * Sets constraints (Viewable place on frame) for the component
+     *
+     * @param springLayout The global layout used, one initialization
+     * @param component    The object being placed to a certain place
+     * @param padNorth     Padding on the north side, relative to the north side
+     * @param padSouth     Padding on the south side, relative to the north side (height)
+     * @param padEast      Padding on the east side, relative to the west side (width)
+     * @param padWest      Padding on the west side, relative to the west side
+     * @param container    Container, so the frame that is being used
+     */
     public static void putConstraint(SpringLayout springLayout, Component component, int padNorth, int padSouth, int padEast, int padWest, Container container) {
         if (padNorth > 0) {
             springLayout.putConstraint(SpringLayout.NORTH, component, padNorth, SpringLayout.NORTH, container);
