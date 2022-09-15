@@ -1,13 +1,18 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -32,8 +37,19 @@ public class SwingApp {
         jFrame.setLayout(sprLayout);
 
         phones = getData(connectMySQL);
-        JTable jTable = createPhoneViewer(jFrame, phones, sprLayout);
+        JTable jTable = createPhoneViewer(jFrame, sprLayout);
         createSearchBar(jFrame, sprLayout, jTable);
+
+        addButton(jFrame, sprLayout, jTable, connectMySQL);
+        removeButton(jFrame, sprLayout, jTable, connectMySQL);
+        exitButton(jFrame, sprLayout);
+
+        jFrame.addHierarchyListener(e -> {
+            if (e.getChanged().isEnabled()) {
+                phones = getData(connectMySQL);
+                updatePhoneViewer(phones, jTable);
+            }
+        });
 
         createLabels(jFrame, sprLayout);
 
@@ -45,6 +61,7 @@ public class SwingApp {
         jFrame.setPreferredSize(new Dimension(widthScreen, heightScreen));
 
         jFrame.setTitle("Phoneshop");
+        jFrame.setResizable(false);
         jFrame.pack();
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setVisible(true);
@@ -64,34 +81,18 @@ public class SwingApp {
 
         descriptionText = addDecription(jFrame, springLayout);
 
-        springLayout.putConstraint(SpringLayout.NORTH, brandLabel, 10, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, brandLabel, 300, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, brandLabel, 260, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.NORTH, brandText, 10, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, brandText, 440, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, brandText, 310, SpringLayout.WEST, container);
+        putConstraint(springLayout, brandLabel, 10, -1, 300, 260, container);
+        putConstraint(springLayout, brandText, 10, -1, 440, 310, container);
 
-        springLayout.putConstraint(SpringLayout.NORTH, priceLabel, 10, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, priceLabel, 520, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, priceLabel, 480, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.NORTH, priceText, 10, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, priceText, 670, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, priceText, 530, SpringLayout.WEST, container);
 
-        springLayout.putConstraint(SpringLayout.NORTH, typeLabel, 50, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, typeLabel, 300, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, typeLabel, 260, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.NORTH, typeText, 50, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, typeText, 440, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, typeText, 310, SpringLayout.WEST, container);
+        putConstraint(springLayout, priceLabel, 10, -1, 520, 480, container);
+        putConstraint(springLayout, priceText, 10, -1, 670, 530, container);
 
-        springLayout.putConstraint(SpringLayout.NORTH, stockLabel, 50, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, stockLabel, 520, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, stockLabel, 480, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.NORTH, stockText, 50, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, stockText, 670, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, stockText, 530, SpringLayout.WEST, container);
+        putConstraint(springLayout, typeLabel, 50, -1, 300, 260, container);
+        putConstraint(springLayout, typeText, 50, -1, 440, 310, container);
 
+        putConstraint(springLayout, stockLabel, 50, -1, 520, 480, container);
+        putConstraint(springLayout, stockText, 50, -1, 670, 530, container);
     }
 
     public static void createSearchBar(JFrame jFrame, SpringLayout springLayout, JTable jTable) {
@@ -113,9 +114,9 @@ public class SwingApp {
                     return;
                 }
                 List<Phone> searchPhones = phones.stream().filter(phoneFind ->
-                        phoneFind.getType().toLowerCase().contains(textField.getText().toLowerCase())
-                                || phoneFind.getBrand().toLowerCase().contains(textField.getText().toLowerCase())
-                                || phoneFind.getDescription().toLowerCase().contains(textField.getText().toLowerCase()))
+                                phoneFind.getType().toLowerCase().contains(textField.getText().toLowerCase())
+                                        || phoneFind.getBrand().toLowerCase().contains(textField.getText().toLowerCase())
+                                        || phoneFind.getDescription().toLowerCase().contains(textField.getText().toLowerCase()))
                         .collect(Collectors.toList());
                 updatePhoneViewer(searchPhones, jTable);
             }
@@ -151,9 +152,71 @@ public class SwingApp {
         });
 
         jFrame.add(textField);
-        springLayout.putConstraint(SpringLayout.NORTH, textField, 10, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, textField, 240, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, textField, 10, SpringLayout.WEST, container);
+
+        putConstraint(springLayout, textField, 10, -1, 240, 10, container);
+    }
+
+    public static void addButton(JFrame jFrame, SpringLayout springLayout, JTable jTable, ConnectMySQL connectMySQL) {
+        Container container = jFrame.getContentPane();
+
+        JButton addButton = new JButton("+");
+
+        addButton.addActionListener(e -> {
+            SwingAddApp.addNewPhone(jFrame ,jTable, connectMySQL);
+        });
+
+        jFrame.add(addButton);
+
+        putConstraint(springLayout, addButton, 500, 520, 70, 10, container);
+
+    }
+
+    public static void removeButton(JFrame jFrame, SpringLayout springLayout, JTable jTable, ConnectMySQL connectMySQL) {
+
+        Container container = jFrame.getContentPane();
+
+        JButton removeButton = new JButton("-");
+
+        removeButton.addActionListener(e -> {
+            if (!jTable.isColumnSelected(0)) {
+                return;
+            }
+            int i = jTable.getSelectedRow();
+            String value = (String) jTable.getModel().getValueAt(i, 0);
+            String information = value.substring(value.indexOf(" ") + 1);
+
+            try {
+                connectMySQL.connect().prepareStatement("DELETE FROM javabase.phone WHERE Type='" + information +"';").execute();
+
+                getData(connectMySQL);
+                System.out.println("Succesfully deleted");
+
+                DefaultTableModel model = (DefaultTableModel) jTable.getModel();
+
+
+                List<Phone> phonesGotten = getData(connectMySQL);
+                updatePhoneViewer(phonesGotten, jTable);
+                model.fireTableDataChanged();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        putConstraint(springLayout, removeButton, 500, 520, 140, 80, container);
+
+        jFrame.add(removeButton);
+    }
+
+    public static void exitButton(JFrame jFrame, SpringLayout springLayout) {
+        Container container = jFrame.getContentPane();
+
+        JButton exitButton = new JButton("Exit");
+
+        exitButton.addActionListener(e -> jFrame.dispose());
+
+        putConstraint(springLayout, exitButton, 500, 520, 670, 610, container);
+
+        jFrame.add(exitButton);
     }
 
     public static JTextArea addDecription(JFrame jFrame, SpringLayout springLayout) {
@@ -165,15 +228,9 @@ public class SwingApp {
 
         Container container = jFrame.getContentPane();
 
-        springLayout.putConstraint(SpringLayout.NORTH, jLabel, 80, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, jLabel, 670, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, jLabel, 260, SpringLayout.WEST, container);
+        putConstraint(springLayout, jLabel, 80, -1, 670, 260, container);
 
-        springLayout.putConstraint(SpringLayout.NORTH, jTextArea, 100, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.SOUTH, jTextArea, 510, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, jTextArea, 670, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, jTextArea, 260, SpringLayout.WEST, container);
-
+        putConstraint(springLayout, jTextArea, 100, 480, 670, 260, container);
 
         jFrame.add(jTextArea);
         jFrame.add(jLabel);
@@ -196,7 +253,7 @@ public class SwingApp {
     }
 
 
-    public static JTable createPhoneViewer(JFrame jFrame, List<Phone> phones, SpringLayout springLayout) {
+    public static JTable createPhoneViewer(JFrame jFrame, SpringLayout springLayout) {
         Container container = jFrame.getContentPane();
 
         List<String[]> data = new ArrayList<>();
@@ -256,15 +313,22 @@ public class SwingApp {
             }
         });
 
+
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(jTable.getModel());
+        jTable.setRowSorter(sorter);
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+
+        int columnIndexToSort = 0;
+        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
+
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
         jTable.setTableHeader(new JTableHeader());
         JScrollPane scrollPane = new JScrollPane(jTable);
 
+        putConstraint(springLayout, scrollPane, 40, 480, 240, 10, container);
 
         jFrame.add(scrollPane);
-        springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 40, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, 510, SpringLayout.NORTH, container);
-        springLayout.putConstraint(SpringLayout.EAST, scrollPane, 240, SpringLayout.WEST, container);
-        springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, container);
         return jTable;
     }
 
@@ -330,5 +394,20 @@ public class SwingApp {
             model.addRow(phoneData);
         }
         model.fireTableDataChanged();
+    }
+
+    public static void putConstraint(SpringLayout springLayout, Component component, int padNorth, int padSouth, int padEast, int padWest, Container container) {
+        if (padNorth > 0) {
+            springLayout.putConstraint(SpringLayout.NORTH, component, padNorth, SpringLayout.NORTH, container);
+        }
+        if (padSouth > 0) {
+            springLayout.putConstraint(SpringLayout.SOUTH, component, padSouth, SpringLayout.NORTH, container);
+        }
+        if (padEast > 0) {
+            springLayout.putConstraint(SpringLayout.EAST, component, padEast, SpringLayout.WEST, container);
+        }
+        if (padWest > 0) {
+            springLayout.putConstraint(SpringLayout.WEST, component, padWest, SpringLayout.WEST, container);
+        }
     }
 }
