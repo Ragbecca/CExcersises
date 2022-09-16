@@ -1,4 +1,10 @@
+package com.ragbecca;
+
+import com.ragbecca.utils.Utils;
+
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
@@ -16,57 +22,44 @@ import java.util.stream.Collectors;
 
 public class SwingApp {
 
-    /**
-     * TextArea where the brand will be displayed
-     */
-    static JTextArea brandText;
+    private JTextArea brandText;
 
-    /**
-     * TextArea where the price will be displayed
-     */
-    static JTextArea priceText;
+    private JTextArea priceText;
 
-    /**
-     * TextArea where the model/type will be displayed
-     */
-    static JTextArea typeText;
+    private JTextArea typeText;
 
-    /**
-     * TextArea where the stock will be displayed
-     */
-    static JTextArea stockText;
+    private JTextArea stockText;
 
-    /**
-     * TextArea where the description will be displayed
-     */
-    static JTextArea descriptionText;
+    private JTextArea descriptionText;
 
     /**
      * List with all the phones to be accessed later
      */
-    static List<Phone> phones;
+    private List<Phone> phones;
+
+    private Utils utils;
+
+
 
     /**
      * Create the view for the application
      *
      * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
      */
-    public static void createView(ConnectMySQL connectMySQL) {
+    public void createView(ConnectMySQL connectMySQL) {
 
         JFrame.setDefaultLookAndFeelDecorated(true);
 
         JFrame jFrame = new JFrame();
         SpringLayout sprLayout = new SpringLayout();
 
+        utils = new Utils();
+
         jFrame.setLayout(sprLayout);
 
         phones = getData(connectMySQL);
-        JTable jTable = createPhoneViewer(jFrame, sprLayout);
-        createSearchBar(jFrame, sprLayout, jTable);
 
-        addButton(jFrame, sprLayout, connectMySQL);
-        removeButton(jFrame, sprLayout, jTable, connectMySQL);
-        exitButton(jFrame, sprLayout);
+        JTable jTable = addAllVisibleComponents(jFrame, sprLayout, connectMySQL);
 
         jFrame.addHierarchyListener(e -> {
             if (e.getChanged().isEnabled()) {
@@ -75,13 +68,15 @@ public class SwingApp {
             }
         });
 
-        createLabels(jFrame, sprLayout);
+        setValuesJFrame(jFrame);
+    }
+
+    private void setValuesJFrame(JFrame jFrame) {
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         int widthScreen = screenSize.width / 2;
         int heightScreen = 560;
-
         jFrame.setPreferredSize(new Dimension(widthScreen, heightScreen));
 
         jFrame.setTitle("Phoneshop");
@@ -91,38 +86,50 @@ public class SwingApp {
         jFrame.setVisible(true);
     }
 
+    private JTable addAllVisibleComponents(JFrame jFrame, SpringLayout springLayout, ConnectMySQL connectMySQL) {
+        JTable jTable = createPhoneViewer(jFrame, springLayout);
+        createSearchBar(jFrame, springLayout, jTable);
+
+        addButton(jFrame, springLayout, connectMySQL);
+        removeButton(jFrame, springLayout, jTable, connectMySQL);
+        exitButton(jFrame, springLayout);
+
+        createLabels(jFrame, springLayout);
+
+        return jTable;
+    }
+
     /**
      * The creation of all individual labels that aren't special.
      *
      * @param jFrame       The Canvas that the viewer needs to attach to
      * @param springLayout The layout used for the placement of the viewer
      */
-    public static void createLabels(JFrame jFrame, SpringLayout springLayout) {
+    private void createLabels(JFrame jFrame, SpringLayout springLayout) {
         Container container = jFrame.getContentPane();
 
-        brandText = createLabel(jFrame);
-        JLabel brandLabel = createLabel(jFrame, "Brand");
-        priceText = createLabel(jFrame);
+        brandText = createTextAreaLabel(jFrame);
+        JLabel brandLabel = createLabel(jFrame, "com.ragbecca.Brand");
+        priceText = createTextAreaLabel(jFrame);
         JLabel priceLabel = createLabel(jFrame, "Price");
-        typeText = createLabel(jFrame);
+        typeText = createTextAreaLabel(jFrame);
         JLabel typeLabel = createLabel(jFrame, "Type");
-        stockText = createLabel(jFrame);
+        stockText = createTextAreaLabel(jFrame);
         JLabel stockLabel = createLabel(jFrame, "Stock");
 
         descriptionText = addDecription(jFrame, springLayout);
 
-        putConstraint(springLayout, brandLabel, 10, -1, 300, 260, container);
-        putConstraint(springLayout, brandText, 10, -1, 440, 310, container);
+        utils.putConstraint(springLayout, brandLabel, 10, -1, 300, 260, container);
+        utils.putConstraint(springLayout, brandText, 10, -1, 440, 310, container);
 
+        utils.putConstraint(springLayout, priceLabel, 10, -1, 520, 480, container);
+        utils.putConstraint(springLayout, priceText, 10, -1, 670, 530, container);
 
-        putConstraint(springLayout, priceLabel, 10, -1, 520, 480, container);
-        putConstraint(springLayout, priceText, 10, -1, 670, 530, container);
+        utils.putConstraint(springLayout, typeLabel, 50, -1, 300, 260, container);
+        utils.putConstraint(springLayout, typeText, 50, -1, 440, 310, container);
 
-        putConstraint(springLayout, typeLabel, 50, -1, 300, 260, container);
-        putConstraint(springLayout, typeText, 50, -1, 440, 310, container);
-
-        putConstraint(springLayout, stockLabel, 50, -1, 520, 480, container);
-        putConstraint(springLayout, stockText, 50, -1, 670, 530, container);
+        utils.putConstraint(springLayout, stockLabel, 50, -1, 520, 480, container);
+        utils.putConstraint(springLayout, stockText, 50, -1, 670, 530, container);
     }
 
     /**
@@ -132,13 +139,374 @@ public class SwingApp {
      * @param springLayout The layout used for the placement of the viewer
      * @param jTable       The table that needs to be updated when the search is happening
      */
-    public static void createSearchBar(JFrame jFrame, SpringLayout springLayout, JTable jTable) {
+    private void createSearchBar(JFrame jFrame, SpringLayout springLayout, JTable jTable) {
         Container container = jFrame.getContentPane();
 
         JTextField textField = new JTextField("Search");
         addPlaceholderStyle(textField);
 
-        textField.addKeyListener(new KeyListener() {
+        textField.addKeyListener(searchBarKeyListener(textField, jTable));
+        textField.addFocusListener(searchBarFocusListener(textField));
+
+        jFrame.add(textField);
+
+        utils.putConstraint(springLayout, textField, 10, -1, 240, 10, container);
+    }
+
+    /**
+     * Opens an external view which makes it possible to add another com.ragbecca.Phone to the system
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
+     */
+    private void addButton(JFrame jFrame, SpringLayout springLayout, ConnectMySQL connectMySQL) {
+        Container container = jFrame.getContentPane();
+
+        JButton addButton = new JButton("+");
+
+        addButton.addActionListener(e -> {
+            SwingAddApp swingAddApp = new SwingAddApp();
+            swingAddApp.addNewPhone(jFrame, connectMySQL);
+        });
+
+        jFrame.add(addButton);
+
+        utils.putConstraint(springLayout, addButton, 500, 520, 70, 10, container);
+
+    }
+
+    /**
+     * Removes a value from the DB and screen
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @param jTable       The Table which the value will be grabbed from to be deleted
+     * @param connectMySQL The connection to MySQL in order to remove the value from the DB
+     */
+    private void removeButton(JFrame jFrame, SpringLayout springLayout, JTable jTable, ConnectMySQL connectMySQL) {
+
+        Container container = jFrame.getContentPane();
+
+        JButton removeButton = new JButton("-");
+
+        removeButton.addActionListener(e -> {
+            if (!jTable.isColumnSelected(0)) {
+                return;
+            }
+            int viewRow = jTable.getSelectedRow();
+            int modelRow = jTable.convertRowIndexToModel(viewRow);
+            String value = (String) jTable.getModel().getValueAt(modelRow, 0);
+            String information = value.substring(value.indexOf(" ") + 1);
+
+            try {
+                connectMySQL.connect().prepareStatement("DELETE FROM javabase.phone WHERE Type='" + information + "';").execute();
+
+                getData(connectMySQL);
+                System.out.println("Succesfully deleted");
+
+                DefaultTableModel model = (DefaultTableModel) jTable.getModel();
+
+
+                List<Phone> phonesGotten = getData(connectMySQL);
+                updatePhoneViewer(phonesGotten, jTable);
+                model.fireTableDataChanged();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        utils.putConstraint(springLayout, removeButton, 500, 520, 140, 80, container);
+
+        jFrame.add(removeButton);
+    }
+
+    /**
+     * Creates an exit button which closes the whole console
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     */
+    private void exitButton(JFrame jFrame, SpringLayout springLayout) {
+        Container container = jFrame.getContentPane();
+
+        JButton exitButton = new JButton("Exit");
+
+        exitButton.addActionListener(e -> jFrame.dispose());
+
+        utils.putConstraint(springLayout, exitButton, 500, 520, 670, 610, container);
+
+        jFrame.add(exitButton);
+    }
+
+    /**
+     * Adds the description + description label to the view
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @return sends back the TextArea that has been created. For changes later on
+     */
+    private JTextArea addDecription(JFrame jFrame, SpringLayout springLayout) {
+        JTextArea jTextArea = new JTextArea(" ");
+        JLabel jLabel = new JLabel("Description");
+        jTextArea.setLineWrap(true);
+        jTextArea.setWrapStyleWord(true);
+        jTextArea.setEditable(false);
+
+        Container container = jFrame.getContentPane();
+
+        utils.putConstraint(springLayout, jLabel, 80, -1, 670, 260, container);
+        utils.putConstraint(springLayout, jTextArea, 100, 480, 670, 260, container);
+        jFrame.add(jTextArea);
+        jFrame.add(jLabel);
+
+        return jTextArea;
+    }
+
+
+    /**
+     * Creates a TextArea for viewing
+     *
+     * @param jFrame The Canvas that the viewer needs to attach to
+     * @return sends back the TextArea that has been created. For changes later on
+     */
+    private JTextArea createTextAreaLabel(JFrame jFrame) {
+        JTextArea jTextArea = new JTextArea(" ");
+        jTextArea.setEditable(false);
+        jFrame.add(jTextArea);
+        return jTextArea;
+    }
+
+    /**
+     * Creates a label for viewing
+     *
+     * @param jFrame The Canvas that the viewer needs to attach to
+     * @param text   The text visible on the label
+     * @return sends back the Label that has been created. For changes later on
+     */
+    private JLabel createLabel(JFrame jFrame, String text) {
+        JLabel jLabel = new JLabel(text);
+        jFrame.add(jLabel);
+        return jLabel;
+    }
+
+
+    /**
+     * Creates a view of the PhoneList
+     *
+     * @param jFrame       The Canvas that the viewer needs to attach to
+     * @param springLayout The layout used for the placement of the viewer
+     * @return JTable that is filled and initialized. Will be usable for checks and updates
+     */
+    private JTable createPhoneViewer(JFrame jFrame, SpringLayout springLayout) {
+        Container container = jFrame.getContentPane();
+
+        String[] column = {"com.ragbecca.Phone"};
+        String[][] values = getRowValues();
+        DefaultTableModel model = new DefaultTableModel(values, column);
+        JTable jTable = new JTable(values, column) {
+            public boolean editCellAt(int row, int column, java.util.EventObject e) {
+                return false;
+            }
+        };
+
+        jTable.setModel(model);
+
+        jTable.addMouseListener(phoneViewerMouseListener(jTable));
+
+        giveExtraValueToJTable(jTable);
+
+        JScrollPane scrollPane = new JScrollPane(jTable);
+
+        utils.putConstraint(springLayout, scrollPane, 40, 480, 240, 10, container);
+
+        jFrame.add(scrollPane);
+        return jTable;
+    }
+
+    /**
+     * Adds a sorter on column 0 and removes the TableHeader
+     *
+     * @param jTable the JTable that needs to be edited
+     */
+    private void giveExtraValueToJTable(JTable jTable) {
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(jTable.getModel());
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+
+        int columnIndexToSort = 0;
+        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
+
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
+        jTable.setRowSorter(sorter);
+
+        jTable.setTableHeader(new JTableHeader());
+    }
+
+    /**
+     * Gets the values for the rows of the table
+     *
+     * @return returns the values gotten from the phones
+     */
+    private String[][] getRowValues() {
+        List<String[]> data = new ArrayList<>();
+        for (Phone phone : phones) {
+            String[] phoneData = {phone.getBrand() + " " + phone.getType()};
+            data.add(phoneData);
+        }
+
+        String[][] values = new String[data.size()][1];
+
+        for (int i = 0; i < data.size(); i++) {
+            values[i] = data.get(i);
+        }
+        return values;
+    }
+
+    /**
+     * Shows a singular phone with all values in the TextArea's.
+     *
+     * @param phone Sends the phone with which needs to be shown.
+     */
+    private void viewPhone(Phone phone) {
+        brandText.setText(phone.getBrand());
+        priceText.setText("€ " + phone.getPrice().setScale(2, RoundingMode.HALF_DOWN));
+        typeText.setText(phone.getType());
+        stockText.setText(String.valueOf(phone.getStock()));
+        descriptionText.setText(phone.getDescription());
+    }
+
+
+    /**
+     * Grab the data from the MySQL database and returns it.
+     *
+     * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
+     * @return a list of phones with all the data from the database.
+     */
+    private List<Phone> getData(ConnectMySQL connectMySQL) {
+        try {
+            ResultSet resultSet = connectMySQL.connect().prepareStatement("SELECT P.phone_ID, P.`Type`," +
+                    " P.Description, P.Price, P.Stock, B.company_name FROM javabase.phone P INNER JOIN javabase.brands B" +
+                    " ON P.brand_ID = B.brand_id;").executeQuery();
+
+            List<Phone> phones = new ArrayList<>();
+
+            while (resultSet.next()) {
+                Phone phone = new Phone(resultSet.getInt("phone_ID"), resultSet.getString("company_name"),
+                        resultSet.getString("Type"), resultSet.getString("Description"),
+                        resultSet.getBigDecimal("Price"), resultSet.getInt("Stock"));
+                phones.add(phone);
+            }
+            resultSet.close();
+            connectMySQL.disconnect();
+            return phones;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Adds the placeholderStyle to a TextField. This TextField is commonly a Search.
+     * Shows the specialised style of a TextField
+     *
+     * @param textField The TextField that needs to be shown with a special style
+     */
+    private void addPlaceholderStyle(JTextField textField) {
+        Font font = textField.getFont();
+        font = font.deriveFont(Font.ITALIC);
+        textField.setFont(font);
+        textField.setForeground(Color.gray);
+    }
+
+    /**
+     * Removes the placeholderStyle from a TextField. This TextField is commonly a Search.
+     * Shows the normal style of a TextField
+     *
+     * @param textField The TextField that needs to become normal
+     */
+    private void removePlaceholderStyle(JTextField textField) {
+        Font font = textField.getFont();
+        font = font.deriveFont(Font.PLAIN | Font.BOLD);
+        textField.setFont(font);
+        textField.setForeground(Color.black);
+    }
+
+    /**
+     * Update the phone viewer on the first view. The phone-viewer is also known as the jTable.
+     *
+     * @param phones The list of phones that's saved, used to show which phones there are on the table.
+     * @param jTable The table that shows the phones
+     */
+    private void updatePhoneViewer(List<Phone> phones, JTable jTable) {
+        DefaultTableModel model = (DefaultTableModel) jTable.getModel();
+
+        model.fireTableDataChanged();
+        while (model.getRowCount() > 0) {
+            for (int row = 0; row < model.getRowCount(); row++) {
+                model.removeRow(0);
+            }
+        }
+        if (phones.size() == 0) {
+            return;
+        }
+        for (Phone phone : phones) {
+            String[] phoneData = {phone.getBrand() + " " + phone.getType()};
+            model.addRow(phoneData);
+        }
+        model.fireTableDataChanged();
+    }
+
+    /**
+     * Creates a MouseListener that listens to when a row is clicked on the JTable
+     * @param jTable
+     * @return Shows the JTable row their values at the correct Labels and TextFields
+     */
+    private MouseListener phoneViewerMouseListener(JTable jTable) {
+
+        return new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int viewRow = jTable.getSelectedRow();
+                int modelRow = jTable.convertRowIndexToModel(viewRow);
+                String value = (String) jTable.getRowSorter().getModel().getValueAt(modelRow, 0);
+                String information = value.substring(value.indexOf(" ") + 1);
+                boolean phoneThere = phones.stream().anyMatch(findPhone -> Objects.equals(findPhone.getType(), information));
+                if (phoneThere) {
+                    Phone phone = phones.stream().filter(findPhone -> Objects.equals(findPhone.getType(), information)).findFirst().get();
+                    viewPhone(phone);
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        };
+    }
+
+    /**
+     * Creates a keylistener that listens to KeyTyped, updates the JTable with phones after 3 keys are typed
+     * @param textField The TextField the key is typed in
+     * @param jTable The JTable that needs to be updated
+     * @return The KeyListener that needs to be added to the TextField
+     */
+    private KeyListener searchBarKeyListener(JTextField textField, JTable jTable) {
+        return new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
                 if (textField.getText().isBlank()) {
@@ -167,9 +535,16 @@ public class SwingApp {
             public void keyReleased(KeyEvent e) {
 
             }
-        });
+        };
+    }
 
-        textField.addFocusListener(new FocusListener() {
+    /**
+     * Creates a FocusListener that edits the TextField with information when selected or deselected
+     * @param textField the TextField to be changed
+     * @return the FocusListener to be added to the TextField
+     */
+    private FocusListener searchBarFocusListener(JTextField textField) {
+        return new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
                 if (textField.getText().equals("Search")) {
@@ -186,353 +561,6 @@ public class SwingApp {
                     textField.setText("Search");
                 }
             }
-        });
-
-        jFrame.add(textField);
-
-        putConstraint(springLayout, textField, 10, -1, 240, 10, container);
-    }
-
-    /**
-     * Opens an external view which makes it possible to add another Phone to the system
-     *
-     * @param jFrame       The Canvas that the viewer needs to attach to
-     * @param springLayout The layout used for the placement of the viewer
-     * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
-     */
-    public static void addButton(JFrame jFrame, SpringLayout springLayout, ConnectMySQL connectMySQL) {
-        Container container = jFrame.getContentPane();
-
-        JButton addButton = new JButton("+");
-
-        addButton.addActionListener(e -> {
-            SwingAddApp.addNewPhone(jFrame, connectMySQL);
-        });
-
-        jFrame.add(addButton);
-
-        putConstraint(springLayout, addButton, 500, 520, 70, 10, container);
-
-    }
-
-    /**
-     * Removes a value from the DB and screen
-     *
-     * @param jFrame       The Canvas that the viewer needs to attach to
-     * @param springLayout The layout used for the placement of the viewer
-     * @param jTable       The Table which the value will be grabbed from to be deleted
-     * @param connectMySQL The connection to MySQL in order to remove the value from the DB
-     */
-    public static void removeButton(JFrame jFrame, SpringLayout springLayout, JTable jTable, ConnectMySQL connectMySQL) {
-
-        Container container = jFrame.getContentPane();
-
-        JButton removeButton = new JButton("-");
-
-        removeButton.addActionListener(e -> {
-            if (!jTable.isColumnSelected(0)) {
-                return;
-            }
-            int i = jTable.getSelectedRow();
-            String value = (String) jTable.getModel().getValueAt(i, 0);
-            String information = value.substring(value.indexOf(" ") + 1);
-
-            try {
-                connectMySQL.connect().prepareStatement("DELETE FROM javabase.phone WHERE Type='" + information + "';").execute();
-
-                getData(connectMySQL);
-                System.out.println("Succesfully deleted");
-
-                DefaultTableModel model = (DefaultTableModel) jTable.getModel();
-
-
-                List<Phone> phonesGotten = getData(connectMySQL);
-                updatePhoneViewer(phonesGotten, jTable);
-                model.fireTableDataChanged();
-            } catch (SQLException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-
-        putConstraint(springLayout, removeButton, 500, 520, 140, 80, container);
-
-        jFrame.add(removeButton);
-    }
-
-    /**
-     * Creates an exit button which closes the whole console
-     *
-     * @param jFrame       The Canvas that the viewer needs to attach to
-     * @param springLayout The layout used for the placement of the viewer
-     */
-    public static void exitButton(JFrame jFrame, SpringLayout springLayout) {
-        Container container = jFrame.getContentPane();
-
-        JButton exitButton = new JButton("Exit");
-
-        exitButton.addActionListener(e -> jFrame.dispose());
-
-        putConstraint(springLayout, exitButton, 500, 520, 670, 610, container);
-
-        jFrame.add(exitButton);
-    }
-
-    /**
-     * Adds the description + description label to the view
-     *
-     * @param jFrame       The Canvas that the viewer needs to attach to
-     * @param springLayout The layout used for the placement of the viewer
-     * @return sends back the TextArea that has been created. For changes later on
-     */
-    public static JTextArea addDecription(JFrame jFrame, SpringLayout springLayout) {
-        JTextArea jTextArea = new JTextArea(" ");
-        JLabel jLabel = new JLabel("Description");
-        jTextArea.setLineWrap(true);
-        jTextArea.setWrapStyleWord(true);
-        jTextArea.setEditable(false);
-
-        Container container = jFrame.getContentPane();
-
-        putConstraint(springLayout, jLabel, 80, -1, 670, 260, container);
-
-        putConstraint(springLayout, jTextArea, 100, 480, 670, 260, container);
-
-        jFrame.add(jTextArea);
-        jFrame.add(jLabel);
-
-        return jTextArea;
-    }
-
-
-    /**
-     * Creates a TextArea for viewing, combined with createLabel(JFrame, String)
-     *
-     * @param jFrame The Canvas that the viewer needs to attach to
-     * @return sends back the TextArea that has been created. For changes later on
-     */
-    public static JTextArea createLabel(JFrame jFrame) {
-        JTextArea jTextArea = new JTextArea(" ");
-        jTextArea.setEditable(false);
-        jFrame.add(jTextArea);
-        return jTextArea;
-    }
-
-    /**
-     * Creates a label for viewing, combined with createLabel(JFrame)
-     *
-     * @param jFrame The Canvas that the viewer needs to attach to
-     * @param text   The text visible on the label
-     * @return sends back the Label that has been created. For changes later on
-     */
-    public static JLabel createLabel(JFrame jFrame, String text) {
-        JLabel jLabel = new JLabel(text);
-        jFrame.add(jLabel);
-        return jLabel;
-    }
-
-
-    /**
-     * Creates a view of the PhoneList
-     *
-     * @param jFrame       The Canvas that the viewer needs to attach to
-     * @param springLayout The layout used for the placement of the viewer
-     * @return JTable that is filled and initialized. Will be usable for checks and updates
-     */
-    public static JTable createPhoneViewer(JFrame jFrame, SpringLayout springLayout) {
-        Container container = jFrame.getContentPane();
-
-        List<String[]> data = new ArrayList<>();
-        for (Phone phone : phones) {
-            String[] phoneData = {phone.getBrand() + " " + phone.getType()};
-            data.add(phoneData);
-        }
-
-        String[][] strings = new String[data.size()][1];
-
-        for (int i = 0; i < data.size(); i++) {
-            strings[i] = data.get(i);
-        }
-
-        String[] column = {"Phone"};
-
-        DefaultTableModel model = new DefaultTableModel(strings, column);
-        JTable jTable = new JTable(strings, column) {
-            public boolean editCellAt(int row, int column, java.util.EventObject e) {
-                return false;
-            }
         };
-
-        jTable.setModel(model);
-
-        jTable.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int i = jTable.getSelectedRow();
-                String value = (String) jTable.getModel().getValueAt(i, 0);
-                String information = value.substring(value.indexOf(" ") + 1);
-                boolean phoneThere = phones.stream().anyMatch(findPhone -> Objects.equals(findPhone.getType(), information));
-                if (phoneThere) {
-                    Phone phone = phones.stream().filter(findPhone -> Objects.equals(findPhone.getType(), information)).findFirst().get();
-                    viewPhone(phone);
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });
-
-
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(jTable.getModel());
-        jTable.setRowSorter(sorter);
-        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-
-        int columnIndexToSort = 0;
-        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
-
-        sorter.setSortKeys(sortKeys);
-        sorter.sort();
-        jTable.setTableHeader(new JTableHeader());
-        JScrollPane scrollPane = new JScrollPane(jTable);
-
-        putConstraint(springLayout, scrollPane, 40, 480, 240, 10, container);
-
-        jFrame.add(scrollPane);
-        return jTable;
-    }
-
-    /**
-     * Shows a singular phone with all values in the TextArea's.
-     *
-     * @param phone Sends the phone with which needs to be shown.
-     */
-    public static void viewPhone(Phone phone) {
-        brandText.setText(phone.getBrand());
-        priceText.setText("€ " + BigDecimal.valueOf(phone.getPrice()).setScale(2, RoundingMode.HALF_DOWN));
-        typeText.setText(phone.getType());
-        stockText.setText(String.valueOf(phone.getStock()));
-        descriptionText.setText(phone.getDescription());
-    }
-
-
-    /**
-     * Grab the data from the MySQL database and returns it.
-     *
-     * @param connectMySQL the initialization of the database connection. There should only be one initialization in the whole project!
-     * @return a list of phones with all the data from the database.
-     */
-    public static List<Phone> getData(ConnectMySQL connectMySQL) {
-        try {
-            ResultSet resultSet = connectMySQL.connect().prepareStatement("SELECT P.phone_ID, P.`Type`," +
-                    " P.Description, P.Price, P.Stock, B.company_name FROM javabase.phone P INNER JOIN javabase.brands B" +
-                    " ON P.brand_ID = B.brand_id;").executeQuery();
-
-            List<Phone> phones = new ArrayList<>();
-
-            while (resultSet.next()) {
-                Phone phone = new Phone(resultSet.getInt("phone_ID"), resultSet.getString("company_name"),
-                        resultSet.getString("Type"), resultSet.getString("Description"),
-                        resultSet.getDouble("Price"), resultSet.getInt("Stock"));
-                phones.add(phone);
-            }
-            resultSet.close();
-            connectMySQL.disconnect();
-            return phones;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Adds the placeholderStyle to a TextField. This TextField is commonly a Search.
-     * Shows the specialised style of a TextField
-     *
-     * @param textField The TextField that needs to be shown with a special style
-     */
-    public static void addPlaceholderStyle(JTextField textField) {
-        Font font = textField.getFont();
-        font = font.deriveFont(Font.ITALIC);
-        textField.setFont(font);
-        textField.setForeground(Color.gray);
-    }
-
-    /**
-     * Removes the placeholderStyle from a TextField. This TextField is commonly a Search.
-     * Shows the normal style of a TextField
-     *
-     * @param textField The TextField that needs to become normal
-     */
-    public static void removePlaceholderStyle(JTextField textField) {
-        Font font = textField.getFont();
-        font = font.deriveFont(Font.PLAIN | Font.BOLD);
-        textField.setFont(font);
-        textField.setForeground(Color.black);
-    }
-
-    /**
-     * Update the phone viewer on the first view. The phone-viewer is also known as the jTable.
-     *
-     * @param phones The list of phones that's saved, used to show which phones there are on the table.
-     * @param jTable The table that shows the phones
-     */
-    public static void updatePhoneViewer(List<Phone> phones, JTable jTable) {
-        DefaultTableModel model = (DefaultTableModel) jTable.getModel();
-
-        model.fireTableDataChanged();
-        while (model.getRowCount() > 0) {
-            for (int row = 0; row < model.getRowCount(); row++) {
-                model.removeRow(0);
-            }
-        }
-        if (phones.size() == 0) {
-            return;
-        }
-        for (Phone phone : phones) {
-            String[] phoneData = {phone.getBrand() + " " + phone.getType()};
-            model.addRow(phoneData);
-        }
-        model.fireTableDataChanged();
-    }
-
-    /**
-     * Sets constraints (Viewable place on frame) for the component
-     *
-     * @param springLayout The global layout used, one initialization
-     * @param component    The object being placed to a certain place
-     * @param padNorth     Padding on the north side, relative to the north side
-     * @param padSouth     Padding on the south side, relative to the north side (height)
-     * @param padEast      Padding on the east side, relative to the west side (width)
-     * @param padWest      Padding on the west side, relative to the west side
-     * @param container    Container, so the frame that is being used
-     */
-    public static void putConstraint(SpringLayout springLayout, Component component, int padNorth, int padSouth, int padEast, int padWest, Container container) {
-        if (padNorth > 0) {
-            springLayout.putConstraint(SpringLayout.NORTH, component, padNorth, SpringLayout.NORTH, container);
-        }
-        if (padSouth > 0) {
-            springLayout.putConstraint(SpringLayout.SOUTH, component, padSouth, SpringLayout.NORTH, container);
-        }
-        if (padEast > 0) {
-            springLayout.putConstraint(SpringLayout.EAST, component, padEast, SpringLayout.WEST, container);
-        }
-        if (padWest > 0) {
-            springLayout.putConstraint(SpringLayout.WEST, component, padWest, SpringLayout.WEST, container);
-        }
     }
 }
