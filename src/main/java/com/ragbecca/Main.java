@@ -1,10 +1,10 @@
-import java.sql.Connection;
-import java.sql.SQLException;
+package com.ragbecca;
 
 public class Main {
 
     public static void main(String[] args) {
         ConnectMySQL mysqlConnect = new ConnectMySQL();
-        SwingApp.createView(mysqlConnect);
+        SwingApp swingApp = new SwingApp();
+        swingApp.createView(mysqlConnect);
     }
 }

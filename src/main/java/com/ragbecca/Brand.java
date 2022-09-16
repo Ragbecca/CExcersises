@@ -1,3 +1,5 @@
+package com.ragbecca;
+
 public class Brand {
     private final int brand_id;
     private String company_name;
