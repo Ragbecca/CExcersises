@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class SwingAddApp {
+public class SwingAddApp extends JFrame {
 
     private JComboBox brandComboBox;
     private JTextArea typeText;
@@ -47,56 +47,53 @@ public class SwingAddApp {
         utils = new Utils();
         sprLayout = new SpringLayout();
         this.connectMySQL = connectMySQL;
-        JFrame jFrame = new JFrame("Add Phone");
 
         brands = getDataBrands();
 
-        jFrame.setLayout(sprLayout);
+        setTitle("Add Phone");
+        setLayout(sprLayout);
 
-        jFrameCreationWithFields(jFrame, otherJFrame);
+        jFrameCreationWithFields(otherJFrame);
     }
 
     /**
      * Calls all fields to be created and updates the JFrame
      *
-     * @param jFrame      frame that is AddPhoneViewer frame
      * @param otherJFrame the main frame
      */
-    private void jFrameCreationWithFields(JFrame jFrame, JFrame otherJFrame) {
+    private void jFrameCreationWithFields(JFrame otherJFrame) {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int widthScreen = screenSize.width / 4;
         int heightScreen = 560;
-        jFrame.setPreferredSize(new Dimension(widthScreen, heightScreen));
+        setPreferredSize(new Dimension(widthScreen, heightScreen));
 
-        container = jFrame.getContentPane();
+        container = getContentPane();
 
-        addTexts(jFrame);
+        addTexts();
 
-        addButton(jFrame);
+        addButton();
 
-        backButton(jFrame, otherJFrame);
+        backButton(otherJFrame);
 
-        addBrandComboBox(jFrame);
+        addBrandComboBox();
 
-        addDescription(jFrame);
+        addDescription();
 
-        addErrorTextField(jFrame);
+        addErrorTextField();
 
-        jFrame.addWindowListener(jFrameWindowListener(otherJFrame));
+        addWindowListener(jFrameWindowListener(otherJFrame));
 
-        jFrame.setResizable(false);
+        setResizable(false);
 
-        jFrame.pack();
-        jFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        jFrame.setVisible(true);
+        pack();
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
     }
 
     /**
      * Creates the ErrorTextField and hides it for later use
-     *
-     * @param jFrame the frame which it needs to be added to
      */
-    private void addErrorTextField(JFrame jFrame) {
+    private void addErrorTextField() {
         errorText = new JTextArea("");
 
         errorText.setEditable(false);
@@ -105,16 +102,16 @@ public class SwingAddApp {
         errorText.setVisible(false);
 
         utils.putConstraint(sprLayout, errorText, 370, 400, 360, 10, container);
-        jFrame.add(errorText);
+        add(errorText);
     }
 
-    private void addButton(JFrame jFrame) {
+    private void addButton() {
 
         JButton addButton = new JButton("Add to Database");
 
-        addButton.addActionListener(actionListenerAddButton(jFrame));
+        addButton.addActionListener(actionListenerAddButton());
 
-        jFrame.add(addButton);
+        add(addButton);
 
         utils.putConstraint(sprLayout, addButton, 320, 350, 270, 120, container);
 
@@ -123,72 +120,23 @@ public class SwingAddApp {
     /**
      * Creates an ActionListener which adds the phone to the DB when the add button is called
      *
-     * @param jFrame the frame that needs to be disposed off when done
      * @return the ActionListener to be used to initialize it
      */
-    private ActionListener actionListenerAddButton(JFrame jFrame) {
+    private ActionListener actionListenerAddButton() {
         return e -> {
             errorText.setVisible(false);
-            String gottenDescriptionText;
-            String gottenPriceText;
-            String gottenTypeText;
-            String gottenStockText;
-            double gottenPrice;
-            int gottenStock;
             BigDecimal updatedGottenPrice;
-            try {
-                gottenDescriptionText = descriptionText.getText();
-            } catch (Exception exception) {
-                errorText.setText("You didn't fill in the description.");
-                errorText.setVisible(true);
+            if (!isDescriptionTextFilledIn() || !isPriceTextFilledInAndCorrect() || !isTypeFilledIn() || !isStockFilledInAndCorrect()) {
                 return;
             }
-            try {
-                gottenPriceText = priceText.getText();
-            } catch (Exception exception) {
-                System.out.println(exception.getMessage());
-                errorText.setText("You didn't fill in the price.");
-                errorText.setVisible(true);
-                return;
-            }
-            try {
-                gottenTypeText = typeText.getText();
-            } catch (Exception exception) {
-                errorText.setText("You didn't fill in the type.");
-                errorText.setVisible(true);
-                return;
-            }
-            try {
-                gottenStockText = stockText.getText();
-            } catch (Exception exception) {
-                errorText.setText("You didn't fill in the stock.");
-                errorText.setVisible(true);
-                return;
-            }
-            try {
-                gottenStock = Integer.parseInt(gottenStockText);
-            } catch (NumberFormatException exception) {
-                errorText.setText("Your stock wasn't a correct number.");
-                errorText.setVisible(true);
-                return;
-            }
-            try {
-                gottenPrice = Double.parseDouble(gottenPriceText);
-                updatedGottenPrice = new BigDecimal(gottenPrice).setScale(2, RoundingMode.HALF_DOWN);
-            } catch (NumberFormatException error) {
-                errorText.setText("Your price wasn't a correct number. Maybe it has to do with you using a , instead of a .");
-                errorText.setVisible(true);
-                return;
-            }
+            updatedGottenPrice = new BigDecimal(priceText.getText()).setScale(2, RoundingMode.HALF_DOWN);
             String gottenBrand = (String) brandComboBox.getSelectedItem();
-            Brand realBrand;
             for (Brand brand : brands) {
                 if (Objects.equals(brand.getCompany_name(), gottenBrand)) {
-                    realBrand = brand;
                     try {
                         connectMySQL.connect().prepareStatement("INSERT INTO javabase.phone (brand_ID, Type, Description, Price, Stock) VALUES ('" +
-                                +realBrand.getBrand_id() + "', '" + gottenTypeText + "', '" + gottenDescriptionText + "', '" + updatedGottenPrice + "', '" + gottenStock + "')").execute();
-                        jFrame.dispose();
+                                brand.getBrand_id() + "', '" + typeText.getText() + "', '" + descriptionText.getText() + "', '" + updatedGottenPrice + "', '" + Integer.parseInt(stockText.getText()) + "')").execute();
+                        dispose();
                     } catch (SQLException ex) {
                         throw new RuntimeException(ex);
                     }
@@ -197,43 +145,98 @@ public class SwingAddApp {
         };
     }
 
+    private boolean isDescriptionTextFilledIn() {
+        try {
+            descriptionText.getText();
+            return true;
+        } catch (Exception exception) {
+            errorMessageEdit(false, "description");
+            return false;
+        }
+    }
+
+    private boolean isPriceTextFilledInAndCorrect() {
+        try {
+            String gottenPriceText = priceText.getText();
+            double gottenPrice = Double.parseDouble(gottenPriceText);
+            new BigDecimal(gottenPrice).setScale(2, RoundingMode.HALF_DOWN);
+            return true;
+        } catch (NumberFormatException exception) {
+            errorMessageEdit(true, "price");
+            return false;
+        } catch (Exception exception) {
+            errorMessageEdit(false, "price");
+            return false;
+        }
+    }
+
+    private boolean isTypeFilledIn() {
+        try {
+            typeText.getText();
+            return true;
+        } catch (Exception exception) {
+            errorMessageEdit(false, "model");
+            return false;
+        }
+    }
+
+    private boolean isStockFilledInAndCorrect() {
+        try {
+            String gottenStockText = stockText.getText();
+            Integer.parseInt(gottenStockText);
+            return true;
+        } catch (NumberFormatException exception) {
+            errorMessageEdit(true, "stock");
+            return false;
+        } catch (Exception exception) {
+            errorMessageEdit(false, "stock");
+            return false;
+        }
+    }
+
+    private void errorMessageEdit(boolean isSpecialType, String typeOfError) {
+        if (isSpecialType) {
+            errorText.setText("Your " + typeOfError + " wasn't a correct number.");
+            errorText.setVisible(true);
+            return;
+        }
+        errorText.setText("You didn't fill in the " + typeOfError + ".");
+        errorText.setVisible(true);
+    }
+
     /**
      * Creates a back to main screen button
      *
-     * @param jFrame      The frame that needs to be disposed off (AddPhoneViewer)
      * @param otherJFrame The main frame that needs to become visible
      */
-    private void backButton(JFrame jFrame, JFrame otherJFrame) {
+    private void backButton(JFrame otherJFrame) {
 
         JButton backButton = new JButton("Back");
 
         backButton.addActionListener(e -> {
-            jFrame.dispose();
+            dispose();
             otherJFrame.setVisible(true);
         });
 
-        jFrame.add(backButton);
+        add(backButton);
 
         utils.putConstraint(sprLayout, backButton, 500, 530, 380, 300, container);
     }
 
     /**
      * Add each individual text and label
-     *
-     * @param jFrame The Frame it needs to be added to
      */
-    private void addTexts(JFrame jFrame) {
+    private void addTexts() {
         typeText = new JTextArea();
         priceText = new JTextArea();
         stockText = new JTextArea();
 
-        addTextAndLabel(jFrame, typeText, (short) 10, (short) 30, (short) 50, (short) 10, (short) 160, "Model");
-        addTextAndLabel(jFrame, priceText, (short) 50, (short) 70, (short) 50, (short) 10, (short) 160, "Price");
-        addTextAndLabel(jFrame, stockText, (short) 50, (short) 70, (short) 220, (short) 180, (short) 330, "Stock");
+        addTextAndLabel(typeText, (short) 10, (short) 30, (short) 50, (short) 10, (short) 160, "Model");
+        addTextAndLabel(priceText, (short) 50, (short) 70, (short) 50, (short) 10, (short) 160, "Price");
+        addTextAndLabel(stockText, (short) 50, (short) 70, (short) 220, (short) 180, (short) 330, "Stock");
     }
 
     /**
-     * @param jFrame   The Frame that everything needs to be added to
      * @param textArea The different TextArea that needs to be placed
      * @param padN     Padding on the north side, relative to the north side
      * @param padS     Padding on the south side, relative to the north side (height)
@@ -241,24 +244,21 @@ public class SwingAddApp {
      * @param padW     Padding on the west side, relative to the west side
      * @param text     The text that needs to be added to the Label
      */
-    private void addTextAndLabel(JFrame jFrame, JTextArea textArea, short padN, short padS, short padE, short padW, short pad2W, String text) {
-        Container container = jFrame.getContentPane();
+    private void addTextAndLabel(JTextArea textArea, short padN, short padS, short padE, short padW, short pad2W, String text) {
 
         JLabel jLabel = new JLabel(text);
 
         utils.putConstraint(sprLayout, jLabel, padN, padS, padE, padW, container);
         utils.putConstraint(sprLayout, textArea, padN, padS, pad2W, padE + 10, container);
 
-        jFrame.add(textArea);
-        jFrame.add(jLabel);
+        add(textArea);
+        add(jLabel);
     }
 
     /**
      * Adds the description module to the screen
-     *
-     * @param jFrame The Frame that the description module needs to be added to
      */
-    private void addDescription(JFrame jFrame) {
+    private void addDescription() {
         descriptionText = new JTextArea();
 
         descriptionText.setLineWrap(true);
@@ -269,16 +269,14 @@ public class SwingAddApp {
         utils.putConstraint(sprLayout, jLabel, 90, 110, 360, 10, container);
         utils.putConstraint(sprLayout, descriptionText, 120, 300, 360, 10, container);
 
-        jFrame.add(descriptionText);
-        jFrame.add(jLabel);
+        add(descriptionText);
+        add(jLabel);
     }
 
     /**
      * Adds all brands to a ComboBox (Dropdown) to be displayed for easier selection
-     *
-     * @param jFrame The Frame that the comboBox needs to be added to
      */
-    private void addBrandComboBox(JFrame jFrame) {
+    private void addBrandComboBox() {
 
         String[] brandsString = new String[brands.size()];
         for (int i = 0; i < brands.size(); i++) {
@@ -291,8 +289,8 @@ public class SwingAddApp {
         utils.putConstraint(sprLayout, jLabel, 10, 30, 220, 180, container);
         utils.putConstraint(sprLayout, brandComboBox, 10, 30, 330, 230, container);
 
-        jFrame.add(brandComboBox);
-        jFrame.add(jLabel);
+        add(brandComboBox);
+        add(jLabel);
     }
 
     /**
